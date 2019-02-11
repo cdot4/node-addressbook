@@ -17,6 +17,7 @@
 
 
 #include "Person.h"
+#include "Group.h"
 
 #ifdef __APPLE__
 #include "AddressBook/ABAddressBookC.h"
@@ -38,6 +39,44 @@ Person* AddressBook::getMe() const
 	Person *p = new Person();
 #endif
 	return p;
+}
+
+unsigned long AddressBook::groupCount() const
+{
+	#ifdef __APPLE__
+		CFIndex count = 0;
+		ABAddressBookRef ab = ABGetSharedAddressBook();
+		CFArrayRef groups = ABCopyArrayOfAllGroups(ab); 
+		if (groups) {
+			count = CFArrayGetCount(groups);
+			CFRelease(groups);
+		}
+		return count;
+	#else
+		return 0;
+	#endif
+}
+
+Group* AddressBook::getGroup(unsigned long pos) const
+{
+#ifdef __APPLE__
+	Group *g = NULL;
+	ABAddressBookRef ab = ABGetSharedAddressBook();
+	CFArrayRef groups = ABCopyArrayOfAllGroups(ab); 
+	if (groups) {
+		CFIndex count = CFArrayGetCount(groups);
+		if ((CFIndex)pos < count) {
+			ABGroupRef ge = (ABGroupRef)CFArrayGetValueAtIndex(groups, pos);
+			if (ge) {
+				g = new Group(ge);
+			}
+		}
+		CFRelease(groups);
+	}
+#else
+	Group *g = new Group();
+#endif
+	return g;
 }
 
 unsigned long AddressBook::contactCount() const

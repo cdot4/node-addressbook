@@ -35,6 +35,14 @@ void setStringArray(Isolate* isolate, Local<Object> obj, const char* name, const
     obj->Set(String::NewFromUtf8(isolate, name), array);
 }
 
+void fillGroupObject(Isolate* isolate, Local<Object> obj, Group *group)
+{
+    obj->Set(String::NewFromUtf8(isolate, "uuid"),
+        String::NewFromUtf8(isolate, group->uuid().c_str()));
+    obj->Set(String::NewFromUtf8(isolate, "group"),
+        String::NewFromUtf8(isolate, group->group().c_str()));
+}
+
 void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
 {
     obj->Set(String::NewFromUtf8(isolate, "firstName"),
@@ -50,6 +58,56 @@ void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
     setStringArray(isolate, obj, "groups", person->groups());
     setStringArray(isolate, obj, "numbers", person->numbers());
 }
+
+class ABGroupWorker : public AsyncProgressWorker {
+    public:
+        ABGroupWorker(Callback *callback, Callback *progress)
+        : AsyncProgressWorker(callback), progress(progress), groups () {}
+
+        ~ABGroupWorker() {}
+
+        void Execute (const AsyncProgressWorker::ExecutionProgress& progress) {
+            AddressBook ab;
+            unsigned total = ab.groupCount();
+            for (unsigned int i = 0; i< total; i++) {
+                groups.push_back(ab.getGroup(i));
+                int percent = ((double)i/(double)total)*100;
+                progress.Send(reinterpret_cast<const char*>(&percent), sizeof(int));
+            }
+        }
+
+        void HandleProgressCallback(const char *data, size_t size) {
+            Nan::HandleScope scope;
+
+            v8::Local<v8::Value> argv[] = {
+                New<v8::Integer>(*reinterpret_cast<int*>(const_cast<char*>(data)))
+            };
+
+            progress->Call(1, argv);
+        }
+
+        // We have the results, and we're back in the event loop.
+        void HandleOKCallback () {
+            Isolate* isolate = Isolate::GetCurrent();
+            Nan::HandleScope scope;
+
+            Local<Array> results = New<Array>(groups.size());
+            int i = 0;
+            for_each(groups.begin(), groups.end(), [&](Group* Group) {
+                    Local<Object> group = Object::New(isolate);
+                    fillGroupObject(isolate, group, Group);
+                    Nan::Set(results, i,  group);
+                    i++;
+            });
+
+            Local<Value> argv[] = {results};
+            callback->Call(1, argv);
+        }
+        
+    private:
+        Callback *progress;
+        vector<Group*> groups;
+};
 
 class AddressBookWorker : public AsyncProgressWorker {
     public:
@@ -99,6 +157,13 @@ class AddressBookWorker : public AsyncProgressWorker {
       vector<Person*> contacts;
 };
 
+NAN_METHOD(GetGroups) {
+    Callback *progress = new Callback(info[0].As<Function>());
+    Callback *callback = new Callback(info[1].As<Function>());
+
+    AsyncQueueWorker(new ABGroupWorker(callback, progress));
+}
+
 // Asynchronous access to the `getContacts()` function
 NAN_METHOD(GetContacts) {
     Callback *progress = new Callback(info[0].As<Function>());
@@ -135,6 +200,11 @@ NAN_METHOD(GetContactsCount) {
     info.GetReturnValue().Set((unsigned)ab.contactCount());
 }
 
+NAN_METHOD(GetGroupCount) {
+    AddressBook ab;
+    info.GetReturnValue().Set((unsigned)ab.groupCount());
+}
+
 NAN_MODULE_INIT(Init) {
     Nan::Set(target, New<String>("getMe").ToLocalChecked(),
         GetFunction(New<FunctionTemplate>(GetMe)).ToLocalChecked());
@@ -145,8 +215,14 @@ NAN_MODULE_INIT(Init) {
     Nan::Set(target, New<String>("getContactsCount").ToLocalChecked(),
         GetFunction(New<FunctionTemplate>(GetContactsCount)).ToLocalChecked());
 
+    Nan::Set(target, New<String>("getGroupCount").ToLocalChecked(),
+        GetFunction(New<FunctionTemplate>(GetGroupCount)).ToLocalChecked());
+
     Nan::Set(target, New<String>("getContacts").ToLocalChecked(),
         GetFunction(New<FunctionTemplate>(GetContacts)).ToLocalChecked());
+
+    Nan::Set(target, New<String>("getGroups").ToLocalChecked(),
+        GetFunction(New<FunctionTemplate>(GetGroups)).ToLocalChecked());
 }
 
 NODE_MODULE(addon, Init)
