@@ -59,6 +59,21 @@ void Person::fillPropertyVector(ABPersonRef person, CFStringRef propertyName, st
                 }   
         }
 }
+
+void Person::fillGroupsVector(ABPersonRef person, CFStringRef propertyName, stringvector& vec)
+{
+        CFArrayRef arrayRef = (CFArrayRef)ABPersonCopyParentGroups(person);
+
+        if (arrayRef) {
+                CFIndex count = CFArrayGetCount(arrayRef);
+                for(CFIndex g = 0; g < count; g++) {
+                        ABGroupRef group = (ABGroupRef)CFArrayGetValueAtIndex(arrayRef, g);
+                        CFStringRef propertyVal = (CFStringRef)ABRecordCopyValue(group, propertyName);
+                        vec.push_back(CFString2String(propertyVal));
+                        CFRelease(propertyVal);
+                } 
+        }
+}
 #endif
 
 Person::Person()
@@ -68,9 +83,13 @@ Person::Person()
 #ifdef __APPLE__
 Person::Person(ABPersonRef p)
 {
+        
 	m_firstName = getStringProperty(p, kABFirstNameProperty);
 	m_lastName = getStringProperty(p, kABLastNameProperty);
+        m_group = getStringProperty(p, kABGroupNameProperty);
+        m_uuid = getStringProperty(p, kABUIDProperty);
 
+	fillGroupsVector(p, kABUIDProperty, m_groups);
 	fillPropertyVector(p, kABEmailProperty, m_emails);
 	fillPropertyVector(p, kABPhoneProperty, m_numbers);
 }
@@ -86,3 +105,7 @@ const stringvector& Person::emails() const
 	return m_emails;
 }
 
+const stringvector& Person::groups() const
+{
+        return m_groups;
+}

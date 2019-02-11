@@ -41,8 +41,13 @@ void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
         String::NewFromUtf8(isolate, person->firstName().c_str()));
     obj->Set(String::NewFromUtf8(isolate, "lastName"),
         String::NewFromUtf8(isolate, person->lastName().c_str()));
+    obj->Set(String::NewFromUtf8(isolate, "uuid"),
+        String::NewFromUtf8(isolate, person->uuid().c_str()));
+    obj->Set(String::NewFromUtf8(isolate, "group"),
+        String::NewFromUtf8(isolate, person->group().c_str()));
 
     setStringArray(isolate, obj, "emails", person->emails());
+    setStringArray(isolate, obj, "groups", person->groups());
     setStringArray(isolate, obj, "numbers", person->numbers());
 }
 

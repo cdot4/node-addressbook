@@ -36,19 +36,25 @@ public:
 
     const std::string& firstName() const { return m_firstName; }
     const std::string& lastName() const { return m_lastName; }
-
+    const std::string& uuid() const { return m_uuid; }
+    const std::string& group() const { return m_group; }
 
     const stringvector& numbers() const;
     const stringvector& emails() const;
+    const stringvector& groups() const;
 
 private:
 #ifdef __APPLE__
     static std::string CFString2String(CFStringRef str);
     static std::string getStringProperty(ABPersonRef person, CFStringRef propertyName);
     static void fillPropertyVector(ABPersonRef person, CFStringRef propertyName, stringvector& vec);
+    static void fillGroupsVector(ABPersonRef person, CFStringRef propertyName, stringvector& vec);
 #endif
     std::string m_firstName;
+    std::string m_uuid;
     std::string m_lastName;
+    std::string m_group;
+    stringvector m_groups;
     stringvector m_numbers;
     stringvector m_emails;
 };
