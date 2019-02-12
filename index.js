@@ -50,7 +50,16 @@ const lib = {
      */
     getContacts: function (onProgress, onFinish) {
         return addressbook.getContacts(onProgress, onFinish)
+    },
+
+    getGroupCount: function (onProgress, onFinish) {
+        return addressbook.getGroupCount(onProgress, onFinish);
+    },
+
+    getGroups: function (onProgress, onFinish) {
+        return addressbook.getGroups(onProgress, onFinish);
     }
 };
 
 module.exports = lib;
+
