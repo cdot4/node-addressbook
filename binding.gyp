@@ -5,6 +5,7 @@
       "sources": [
         "AddressBook.cc",
         "Person.cc",
+	"Group.cc",
         "wrapper.cc"
       ],
       "include_dirs": [
