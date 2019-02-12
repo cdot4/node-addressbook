@@ -83,11 +83,16 @@ void Person::fillPhoneVector(ABPersonRef person, phonevector& vec)
                 CFIndex count = ABMultiValueCount(propertyArray);
                 for(CFIndex p = 0; p < count; p++) {
                         phonemap pm;
+                        CFStringRef propertyPhoneNumberLabel = (CFStringRef)ABMultiValueCopyLabelAtIndex(propertyArray, p);
+                        CFStringRef propertyPhoneNumberLabelLocalized = (CFStringRef)ABCopyLocalizedPropertyOrLabel(propertyPhoneNumberLabel);
                         CFStringRef propertyId = (CFStringRef)ABMultiValueCopyIdentifierAtIndex(propertyArray, p);
                         CFStringRef propertyVal = (CFStringRef)ABMultiValueCopyValueAtIndex(propertyArray, p);
 			pm.insert(std::pair<std::string, std::string>("number", CFString2String(propertyVal)));
                         pm.insert(std::pair<std::string, std::string>("uuid", CFString2String(propertyId)));
+                        pm.insert(std::pair<std::string, std::string>("label", CFString2String(propertyPhoneNumberLabelLocalized)));
                         vec.push_back(pm);
+                        CFRelease(propertyPhoneNumberLabel);
+                        CFRelease(propertyPhoneNumberLabelLocalized);
                         CFRelease(propertyId);
                         CFRelease(propertyVal);
                 }   

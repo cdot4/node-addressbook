@@ -24,27 +24,27 @@ using namespace Nan;
 using namespace std;
 using namespace v8;
 
-
-void setStringArray(Isolate* isolate, Local<Object> obj, const char* name, const stringvector& src)
+void setStringArray(Isolate *isolate, Local<Object> obj, const char *name, const stringvector &src)
 {
     Local<Array> array = Array::New(isolate);
-    for (unsigned int i = 0; i < src.size(); i++ ) {
+    for (unsigned int i = 0; i < src.size(); i++)
+    {
         Local<String> result = String::NewFromUtf8(isolate, src[i].c_str());
         array->Set(i, result);
     }
     obj->Set(String::NewFromUtf8(isolate, name), array);
 }
 
-void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
+void fillPersonObject(Isolate *isolate, Local<Object> obj, Person *person)
 {
     obj->Set(String::NewFromUtf8(isolate, "firstName"),
-        String::NewFromUtf8(isolate, person->firstName().c_str()));
+             String::NewFromUtf8(isolate, person->firstName().c_str()));
     obj->Set(String::NewFromUtf8(isolate, "lastName"),
-        String::NewFromUtf8(isolate, person->lastName().c_str()));
+             String::NewFromUtf8(isolate, person->lastName().c_str()));
     obj->Set(String::NewFromUtf8(isolate, "uuid"),
-        String::NewFromUtf8(isolate, person->uuid().c_str()));
+             String::NewFromUtf8(isolate, person->uuid().c_str()));
     obj->Set(String::NewFromUtf8(isolate, "group"),
-        String::NewFromUtf8(isolate, person->group().c_str()));
+             String::NewFromUtf8(isolate, person->group().c_str()));
 
     setStringArray(isolate, obj, "emails", person->emails());
     setStringArray(isolate, obj, "groups", person->groups());
@@ -52,10 +52,12 @@ void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
 
     Local<Array> array = Array::New(isolate);
     phonevector src = person->numbers();
-    for (unsigned int i = 0; i < src.size(); i++ ) {
+    for (unsigned int i = 0; i < src.size(); i++)
+    {
         Local<Object> me = Object::New(isolate);
-        
+
         // fillPersonObject(isolate, me, &src[i]);
+        me->Set(String::NewFromUtf8(isolate, "label"), String::NewFromUtf8(isolate, src[i]["label"].c_str()));
         me->Set(String::NewFromUtf8(isolate, "number"), String::NewFromUtf8(isolate, src[i]["number"].c_str()));
         me->Set(String::NewFromUtf8(isolate, "uuid"), String::NewFromUtf8(isolate, src[i]["uuid"].c_str()));
         array->Set(i, me);
@@ -63,16 +65,17 @@ void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
     obj->Set(String::NewFromUtf8(isolate, "numbers"), array);
 }
 
-void fillGroupObject(Isolate* isolate, Local<Object> obj, Group *group)
+void fillGroupObject(Isolate *isolate, Local<Object> obj, Group *group)
 {
     obj->Set(String::NewFromUtf8(isolate, "uuid"),
-        String::NewFromUtf8(isolate, group->uuid().c_str()));
+             String::NewFromUtf8(isolate, group->uuid().c_str()));
     obj->Set(String::NewFromUtf8(isolate, "group"),
-        String::NewFromUtf8(isolate, group->group().c_str()));
+             String::NewFromUtf8(isolate, group->group().c_str()));
 
     Local<Array> array = Array::New(isolate);
     personvector src = group->members();
-    for (unsigned int i = 0; i < src.size(); i++ ) {
+    for (unsigned int i = 0; i < src.size(); i++)
+    {
         Local<Object> me = Object::New(isolate);
         fillPersonObject(isolate, me, &src[i]);
         array->Set(i, me);
@@ -80,105 +83,115 @@ void fillGroupObject(Isolate* isolate, Local<Object> obj, Group *group)
     obj->Set(String::NewFromUtf8(isolate, "members"), array);
 }
 
-class ABGroupWorker : public AsyncProgressWorker {
-    public:
-        ABGroupWorker(Callback *callback, Callback *progress)
-        : AsyncProgressWorker(callback), progress(progress), groups () {}
+class ABGroupWorker : public AsyncProgressWorker
+{
+  public:
+    ABGroupWorker(Callback *callback, Callback *progress)
+        : AsyncProgressWorker(callback), progress(progress), groups() {}
 
-        ~ABGroupWorker() {}
+    ~ABGroupWorker() {}
 
-        void Execute (const AsyncProgressWorker::ExecutionProgress& progress) {
-            AddressBook ab;
-            unsigned total = ab.groupCount();
-            for (unsigned int i = 0; i< total; i++) {
-                groups.push_back(ab.getGroup(i));
-                int percent = ((double)i/(double)total)*100;
-                progress.Send(reinterpret_cast<const char*>(&percent), sizeof(int));
-            }
+    void Execute(const AsyncProgressWorker::ExecutionProgress &progress)
+    {
+        AddressBook ab;
+        unsigned total = ab.groupCount();
+        for (unsigned int i = 0; i < total; i++)
+        {
+            groups.push_back(ab.getGroup(i));
+            int percent = ((double)i / (double)total) * 100;
+            progress.Send(reinterpret_cast<const char *>(&percent), sizeof(int));
         }
+    }
 
-        void HandleProgressCallback(const char *data, size_t size) {
-            Nan::HandleScope scope;
+    void HandleProgressCallback(const char *data, size_t size)
+    {
+        Nan::HandleScope scope;
 
-            v8::Local<v8::Value> argv[] = {
-                New<v8::Integer>(*reinterpret_cast<int*>(const_cast<char*>(data)))
-            };
+        v8::Local<v8::Value> argv[] = {
+            New<v8::Integer>(*reinterpret_cast<int *>(const_cast<char *>(data)))};
 
-            progress->Call(1, argv);
-        }
+        progress->Call(1, argv);
+    }
 
-        // We have the results, and we're back in the event loop.
-        void HandleOKCallback () {
-            Isolate* isolate = Isolate::GetCurrent();
-            Nan::HandleScope scope;
+    // We have the results, and we're back in the event loop.
+    void HandleOKCallback()
+    {
+        Isolate *isolate = Isolate::GetCurrent();
+        Nan::HandleScope scope;
 
-            Local<Array> results = New<Array>(groups.size());
-            int i = 0;
-            for_each(groups.begin(), groups.end(), [&](Group* Group) {
-                    Local<Object> group = Object::New(isolate);
-                    fillGroupObject(isolate, group, Group);
-                    Nan::Set(results, i,  group);
-                    i++;
-            });
+        Local<Array> results = New<Array>(groups.size());
+        int i = 0;
+        for_each(groups.begin(), groups.end(), [&](Group *Group) {
+            Local<Object> group = Object::New(isolate);
+            fillGroupObject(isolate, group, Group);
+            Nan::Set(results, i, group);
+            i++;
+        });
 
-            Local<Value> argv[] = {results};
-            callback->Call(1, argv);
-        }
-        
-    private:
-        Callback *progress;
-        vector<Group*> groups;
+        Local<Value> argv[] = {results};
+        callback->Call(1, argv);
+    }
+
+  private:
+    Callback *progress;
+    vector<Group *> groups;
 };
 
-class AddressBookWorker : public AsyncProgressWorker {
-    public:
-        AddressBookWorker(Callback *callback,Callback *progress)
-        : AsyncProgressWorker(callback), progress(progress) , contacts() {}
+class AddressBookWorker : public AsyncProgressWorker
+{
+  public:
+    AddressBookWorker(Callback *callback, Callback *progress)
+        : AsyncProgressWorker(callback), progress(progress), contacts() {}
 
-        ~AddressBookWorker() {}
+    ~AddressBookWorker() {}
 
-        void Execute (const AsyncProgressWorker::ExecutionProgress& progress) {
-            AddressBook ab;
-            unsigned total = ab.contactCount();
-            for (unsigned int i = 0; i < total; i++ ) {
-                contacts.push_back(ab.getContact(i));
-                int percent = ((double)i/(double)total)*100;
-                progress.Send(reinterpret_cast<const char*>(&percent), sizeof(int));
-            }
+    void Execute(const AsyncProgressWorker::ExecutionProgress &progress)
+    {
+        AddressBook ab;
+        unsigned total = ab.contactCount();
+        for (unsigned int i = 0; i < total; i++)
+        {
+            contacts.push_back(ab.getContact(i));
+            int percent = ((double)i / (double)total) * 100;
+            progress.Send(reinterpret_cast<const char *>(&percent), sizeof(int));
         }
+    }
 
-        void HandleProgressCallback(const char *data, size_t size) {
-            Nan::HandleScope scope;
+    void HandleProgressCallback(const char *data, size_t size)
+    {
+        Nan::HandleScope scope;
 
-            v8::Local<v8::Value> argv[] = {
-                New<v8::Integer>(*reinterpret_cast<int*>(const_cast<char*>(data)))
-            };
-            progress->Call(1, argv);
-        }
+        v8::Local<v8::Value> argv[] = {
+            New<v8::Integer>(*reinterpret_cast<int *>(const_cast<char *>(data)))};
+        progress->Call(1, argv);
+    }
 
-        // We have the results, and we're back in the event loop.
-        void HandleOKCallback () {
-            Isolate* isolate = Isolate::GetCurrent();
-            Nan::HandleScope scope;
+    // We have the results, and we're back in the event loop.
+    void HandleOKCallback()
+    {
+        Isolate *isolate = Isolate::GetCurrent();
+        Nan::HandleScope scope;
 
-            Local<Array> results = New<Array>(contacts.size());
-            int i = 0;
-            for_each(contacts.begin(), contacts.end(), [&](Person* person) {
-                    Local<Object> contact = Object::New(isolate);
-                    fillPersonObject(isolate, contact, person);
-                    Nan::Set(results, i,  contact);
-                    i++;
-            });
+        Local<Array> results = New<Array>(contacts.size());
+        int i = 0;
+        for_each(contacts.begin(), contacts.end(), [&](Person *person) {
+            Local<Object> contact = Object::New(isolate);
+            fillPersonObject(isolate, contact, person);
+            Nan::Set(results, i, contact);
+            i++;
+        });
 
-            Local<Value> argv[] = {results};
-            callback->Call(1, argv);
-        }
-    private:
-      Callback *progress;
-      vector<Person*> contacts;
+        Local<Value> argv[] = {results};
+        callback->Call(1, argv);
+    }
+
+  private:
+    Callback *progress;
+    vector<Person *> contacts;
 };
 
-NAN_METHOD(GetGroups) {
+NAN_METHOD(GetGroups)
+{
     Callback *progress = new Callback(info[0].As<Function>());
     Callback *callback = new Callback(info[1].As<Function>());
 
@@ -186,16 +199,18 @@ NAN_METHOD(GetGroups) {
 }
 
 // Asynchronous access to the `getContacts()` function
-NAN_METHOD(GetContacts) {
+NAN_METHOD(GetContacts)
+{
     Callback *progress = new Callback(info[0].As<Function>());
     Callback *callback = new Callback(info[1].As<Function>());
 
     AsyncQueueWorker(new AddressBookWorker(callback, progress));
 }
 
-NAN_METHOD(GetMe) {
+NAN_METHOD(GetMe)
+{
     AddressBook ab;
-    Isolate* isolate = Isolate::GetCurrent();
+    Isolate *isolate = Isolate::GetCurrent();
 
     Local<Object> me = Object::New(isolate);
     fillPersonObject(isolate, me, ab.getMe());
@@ -203,12 +218,12 @@ NAN_METHOD(GetMe) {
     info.GetReturnValue().Set(me);
 }
 
-
-NAN_METHOD(GetContact) {
+NAN_METHOD(GetContact)
+{
     int index = info[0]->Uint32Value();
 
     AddressBook ab;
-    Isolate* isolate = Isolate::GetCurrent();
+    Isolate *isolate = Isolate::GetCurrent();
 
     Local<Object> contact = Object::New(isolate);
     fillPersonObject(isolate, contact, ab.getContact(index));
@@ -216,34 +231,37 @@ NAN_METHOD(GetContact) {
     info.GetReturnValue().Set(contact);
 }
 
-NAN_METHOD(GetContactsCount) {
+NAN_METHOD(GetContactsCount)
+{
     AddressBook ab;
     info.GetReturnValue().Set((unsigned)ab.contactCount());
 }
 
-NAN_METHOD(GetGroupCount) {
+NAN_METHOD(GetGroupCount)
+{
     AddressBook ab;
     info.GetReturnValue().Set((unsigned)ab.groupCount());
 }
 
-NAN_MODULE_INIT(Init) {
+NAN_MODULE_INIT(Init)
+{
     Nan::Set(target, New<String>("getMe").ToLocalChecked(),
-        GetFunction(New<FunctionTemplate>(GetMe)).ToLocalChecked());
+             GetFunction(New<FunctionTemplate>(GetMe)).ToLocalChecked());
 
     Nan::Set(target, New<String>("getContact").ToLocalChecked(),
-        GetFunction(New<FunctionTemplate>(GetContact)).ToLocalChecked());
+             GetFunction(New<FunctionTemplate>(GetContact)).ToLocalChecked());
 
     Nan::Set(target, New<String>("getContactsCount").ToLocalChecked(),
-        GetFunction(New<FunctionTemplate>(GetContactsCount)).ToLocalChecked());
+             GetFunction(New<FunctionTemplate>(GetContactsCount)).ToLocalChecked());
 
     Nan::Set(target, New<String>("getGroupCount").ToLocalChecked(),
-        GetFunction(New<FunctionTemplate>(GetGroupCount)).ToLocalChecked());
+             GetFunction(New<FunctionTemplate>(GetGroupCount)).ToLocalChecked());
 
     Nan::Set(target, New<String>("getContacts").ToLocalChecked(),
-        GetFunction(New<FunctionTemplate>(GetContacts)).ToLocalChecked());
+             GetFunction(New<FunctionTemplate>(GetContacts)).ToLocalChecked());
 
     Nan::Set(target, New<String>("getGroups").ToLocalChecked(),
-        GetFunction(New<FunctionTemplate>(GetGroups)).ToLocalChecked());
+             GetFunction(New<FunctionTemplate>(GetGroups)).ToLocalChecked());
 }
 
 NODE_MODULE(addon, Init)
