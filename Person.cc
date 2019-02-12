@@ -74,6 +74,25 @@ void Person::fillGroupsVector(ABPersonRef person, CFStringRef propertyName, stri
                 } 
         }
 }
+
+void Person::fillPhoneVector(ABPersonRef person, phonevector& vec)
+{
+        ABMultiValueRef propertyArray = (ABMultiValueRef)ABRecordCopyValue(person, kABPhoneProperty);
+
+        if (propertyArray) {
+                CFIndex count = ABMultiValueCount(propertyArray);
+                for(CFIndex p = 0; p < count; p++) {
+                        phonemap pm;
+                        CFStringRef propertyId = (CFStringRef)ABMultiValueCopyIdentifierAtIndex(propertyArray, p);
+                        CFStringRef propertyVal = (CFStringRef)ABMultiValueCopyValueAtIndex(propertyArray, p);
+			pm.insert(std::pair<std::string, std::string>("number", CFString2String(propertyVal)));
+                        pm.insert(std::pair<std::string, std::string>("uuid", CFString2String(propertyId)));
+                        vec.push_back(pm);
+                        CFRelease(propertyId);
+                        CFRelease(propertyVal);
+                }   
+        }
+}
 #endif
 
 Person::Person()
@@ -91,11 +110,11 @@ Person::Person(ABPersonRef p)
 
 	fillGroupsVector(p, kABUIDProperty, m_groups);
 	fillPropertyVector(p, kABEmailProperty, m_emails);
-	fillPropertyVector(p, kABPhoneProperty, m_numbers);
+        fillPhoneVector(p, m_numbers);
 }
 #endif
 
-const stringvector& Person::numbers() const
+const phonevector& Person::numbers() const
 {
 	return m_numbers;
 }

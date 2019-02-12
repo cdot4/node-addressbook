@@ -20,11 +20,14 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #ifdef __APPLE__
 #include <AddressBook/ABAddressBookC.h>
 #endif
 
 typedef std::vector<std::string> stringvector;
+typedef std::map<std::string, std::string> phonemap;
+typedef std::vector<phonemap> phonevector;
 
 class Person
 {
@@ -39,7 +42,7 @@ public:
     const std::string& uuid() const { return m_uuid; }
     const std::string& group() const { return m_group; }
 
-    const stringvector& numbers() const;
+    const phonevector& numbers() const;
     const stringvector& emails() const;
     const stringvector& groups() const;
 
@@ -48,6 +51,7 @@ private:
     static std::string CFString2String(CFStringRef str);
     static std::string getStringProperty(ABPersonRef person, CFStringRef propertyName);
     static void fillPropertyVector(ABPersonRef person, CFStringRef propertyName, stringvector& vec);
+    static void fillPhoneVector(ABPersonRef person, phonevector& map);
     static void fillGroupsVector(ABPersonRef person, CFStringRef propertyName, stringvector& vec);
 #endif
     std::string m_firstName;
@@ -55,7 +59,7 @@ private:
     std::string m_lastName;
     std::string m_group;
     stringvector m_groups;
-    stringvector m_numbers;
+    phonevector m_numbers;
     stringvector m_emails;
 };
 

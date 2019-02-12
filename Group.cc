@@ -42,6 +42,21 @@ void Group::fillPropertyVector(ABGroupRef group, CFStringRef propertyName, strin
         }   
     }
 }
+
+void Group::fillMembersVector(ABGroupRef group, personvector& pv)
+{
+    CFArrayRef groupMembers =(CFArrayRef)ABGroupCopyArrayOfAllMembers(group);
+    CFIndex count = CFArrayGetCount(groupMembers);
+
+	// Person p = NULL;
+    for (int i = 0; i < count; i++) {
+        ABPersonRef pRef = (ABPersonRef)CFArrayGetValueAtIndex(groupMembers, i);
+        Person* p = new Person(pRef);
+        pv.push_back(*p);
+        CFRelease(pRef);
+        delete p;
+    }
+}
 #endif
 
 Group::Group()
@@ -53,5 +68,11 @@ Group::Group(ABGroupRef g)
 {
     m_group = getStringProperty(g, kABGroupNameProperty);
     m_uuid = getStringProperty(g, kABUIDProperty);
+    fillMembersVector(g, m_members);
 }
 #endif
+
+const personvector& Group::members() const
+{
+	return m_members;
+}

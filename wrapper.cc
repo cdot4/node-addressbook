@@ -35,14 +35,6 @@ void setStringArray(Isolate* isolate, Local<Object> obj, const char* name, const
     obj->Set(String::NewFromUtf8(isolate, name), array);
 }
 
-void fillGroupObject(Isolate* isolate, Local<Object> obj, Group *group)
-{
-    obj->Set(String::NewFromUtf8(isolate, "uuid"),
-        String::NewFromUtf8(isolate, group->uuid().c_str()));
-    obj->Set(String::NewFromUtf8(isolate, "group"),
-        String::NewFromUtf8(isolate, group->group().c_str()));
-}
-
 void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
 {
     obj->Set(String::NewFromUtf8(isolate, "firstName"),
@@ -56,7 +48,36 @@ void fillPersonObject(Isolate* isolate, Local<Object> obj, Person *person)
 
     setStringArray(isolate, obj, "emails", person->emails());
     setStringArray(isolate, obj, "groups", person->groups());
-    setStringArray(isolate, obj, "numbers", person->numbers());
+    // setStringArray(isolate, obj, "numbers", person->numbers());
+
+    Local<Array> array = Array::New(isolate);
+    phonevector src = person->numbers();
+    for (unsigned int i = 0; i < src.size(); i++ ) {
+        Local<Object> me = Object::New(isolate);
+        
+        // fillPersonObject(isolate, me, &src[i]);
+        me->Set(String::NewFromUtf8(isolate, "number"), String::NewFromUtf8(isolate, src[i]["number"].c_str()));
+        me->Set(String::NewFromUtf8(isolate, "uuid"), String::NewFromUtf8(isolate, src[i]["uuid"].c_str()));
+        array->Set(i, me);
+    }
+    obj->Set(String::NewFromUtf8(isolate, "numbers"), array);
+}
+
+void fillGroupObject(Isolate* isolate, Local<Object> obj, Group *group)
+{
+    obj->Set(String::NewFromUtf8(isolate, "uuid"),
+        String::NewFromUtf8(isolate, group->uuid().c_str()));
+    obj->Set(String::NewFromUtf8(isolate, "group"),
+        String::NewFromUtf8(isolate, group->group().c_str()));
+
+    Local<Array> array = Array::New(isolate);
+    personvector src = group->members();
+    for (unsigned int i = 0; i < src.size(); i++ ) {
+        Local<Object> me = Object::New(isolate);
+        fillPersonObject(isolate, me, &src[i]);
+        array->Set(i, me);
+    }
+    obj->Set(String::NewFromUtf8(isolate, "members"), array);
 }
 
 class ABGroupWorker : public AsyncProgressWorker {
