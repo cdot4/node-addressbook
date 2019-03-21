@@ -48,16 +48,20 @@ const lib = {
      * @param {Function} [onProgress] Callback provides overall process percent as an integer value between 1 to 100
      * @param {Function} [onFinish] Callback provides an array contains all of the Addressbook contacts information
      */
-    getContacts: function (onProgress, onFinish) {
-        return addressbook.getContacts(onProgress, onFinish)
+    getContacts: function () {
+        return new Promise((resolve, reject) => {
+            addressbook.getContacts(() => {}, resolve);
+        });
     },
 
     getGroupCount: function (onProgress, onFinish) {
         return addressbook.getGroupCount(onProgress, onFinish);
     },
 
-    getGroups: function (onProgress, onFinish) {
-        return addressbook.getGroups(onProgress, onFinish);
+    getGroups: () => {
+        return new Promise((resolve, reject) => {
+            addressbook.getGroups(() => {}, resolve);
+        });
     }
 };
 
