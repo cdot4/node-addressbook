@@ -48,9 +48,9 @@ const lib = {
      * @param {Function} [onProgress] Callback provides overall process percent as an integer value between 1 to 100
      * @param {Function} [onFinish] Callback provides an array contains all of the Addressbook contacts information
      */
-    getContacts: function () {
+    getContacts: function (onProgress) {
         return new Promise((resolve, reject) => {
-            addressbook.getContacts(() => {}, resolve);
+            addressbook.getContacts(onProgress, resolve);
         });
     },
 
