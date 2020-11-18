@@ -29,22 +29,19 @@ void setStringArray(Isolate *isolate, Local<Object> obj, const char *name, const
     Local<Array> array = Array::New(isolate);
     for (unsigned int i = 0; i < src.size(); i++)
     {
-        Local<String> result = String::NewFromUtf8(isolate, src[i].c_str());
-        array->Set(i, result);
+        Local<String> result = String::NewFromUtf8(isolate, src[i].c_str()).ToLocalChecked();
+        array->Set(isolate->GetCurrentContext(), i, result);
     }
-    obj->Set(String::NewFromUtf8(isolate, name), array);
+    obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, name).ToLocalChecked(), array);
 }
 
 void fillPersonObject(Isolate *isolate, Local<Object> obj, Person *person)
 {
-    obj->Set(String::NewFromUtf8(isolate, "firstName"),
-             String::NewFromUtf8(isolate, person->firstName().c_str()));
-    obj->Set(String::NewFromUtf8(isolate, "lastName"),
-             String::NewFromUtf8(isolate, person->lastName().c_str()));
-    obj->Set(String::NewFromUtf8(isolate, "uuid"),
-             String::NewFromUtf8(isolate, person->uuid().c_str()));
-    obj->Set(String::NewFromUtf8(isolate, "group"),
-             String::NewFromUtf8(isolate, person->group().c_str()));
+	Local<Context> context = isolate->GetCurrentContext();
+    obj->Set(context, String::NewFromUtf8(isolate, "firstName").ToLocalChecked(), String::NewFromUtf8(isolate, person->firstName().c_str()).ToLocalChecked());
+    obj->Set(context, String::NewFromUtf8(isolate, "lastName").ToLocalChecked(), String::NewFromUtf8(isolate, person->lastName().c_str()).ToLocalChecked());
+    obj->Set(context, String::NewFromUtf8(isolate, "uuid").ToLocalChecked(), String::NewFromUtf8(isolate, person->uuid().c_str()).ToLocalChecked());
+    obj->Set(context, String::NewFromUtf8(isolate, "group").ToLocalChecked(), String::NewFromUtf8(isolate, person->group().c_str()).ToLocalChecked());
 
     setStringArray(isolate, obj, "emails", person->emails());
     setStringArray(isolate, obj, "groups", person->groups());
@@ -57,20 +54,22 @@ void fillPersonObject(Isolate *isolate, Local<Object> obj, Person *person)
         Local<Object> me = Object::New(isolate);
 
         // fillPersonObject(isolate, me, &src[i]);
-        me->Set(String::NewFromUtf8(isolate, "label"), String::NewFromUtf8(isolate, src[i]["label"].c_str()));
-        me->Set(String::NewFromUtf8(isolate, "number"), String::NewFromUtf8(isolate, src[i]["number"].c_str()));
-        me->Set(String::NewFromUtf8(isolate, "uuid"), String::NewFromUtf8(isolate, src[i]["uuid"].c_str()));
-        array->Set(i, me);
+        me->Set(context, String::NewFromUtf8(isolate, "label").ToLocalChecked(), String::NewFromUtf8(isolate, src[i]["label"].c_str()).ToLocalChecked());
+        me->Set(context, String::NewFromUtf8(isolate, "number").ToLocalChecked(), String::NewFromUtf8(isolate, src[i]["number"].c_str()).ToLocalChecked());
+        me->Set(context, String::NewFromUtf8(isolate, "uuid").ToLocalChecked(), String::NewFromUtf8(isolate, src[i]["uuid"].c_str()).ToLocalChecked());
+        array->Set(context, i, me);
     }
-    obj->Set(String::NewFromUtf8(isolate, "numbers"), array);
+    obj->Set(context, String::NewFromUtf8(isolate, "numbers").ToLocalChecked(), array);
 }
 
 void fillGroupObject(Isolate *isolate, Local<Object> obj, Group *group)
 {
-    obj->Set(String::NewFromUtf8(isolate, "uuid"),
-             String::NewFromUtf8(isolate, group->uuid().c_str()));
-    obj->Set(String::NewFromUtf8(isolate, "group"),
-             String::NewFromUtf8(isolate, group->group().c_str()));
+	Local<Context> context = isolate->GetCurrentContext();
+
+    obj->Set(context, String::NewFromUtf8(isolate, "uuid").ToLocalChecked(),
+             String::NewFromUtf8(isolate, group->uuid().c_str()).ToLocalChecked());
+    obj->Set(context, String::NewFromUtf8(isolate, "group").ToLocalChecked(),
+             String::NewFromUtf8(isolate, group->group().c_str()).ToLocalChecked());
 
     Local<Array> array = Array::New(isolate);
     personvector src = group->members();
@@ -78,9 +77,9 @@ void fillGroupObject(Isolate *isolate, Local<Object> obj, Group *group)
     {
         Local<Object> me = Object::New(isolate);
         fillPersonObject(isolate, me, &src[i]);
-        array->Set(i, me);
+        array->Set(isolate->GetCurrentContext(), i, me);
     }
-    obj->Set(String::NewFromUtf8(isolate, "members"), array);
+    obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "members").ToLocalChecked(), array);
 }
 
 class ABGroupWorker : public AsyncProgressWorker
@@ -220,7 +219,7 @@ NAN_METHOD(GetMe)
 
 NAN_METHOD(GetContact)
 {
-    int index = info[0]->Uint32Value();
+	unsigned int index = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
 
     AddressBook ab;
     Isolate *isolate = Isolate::GetCurrent();
