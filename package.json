@@ -41,7 +41,7 @@
   },
   "gypfile": true,
   "dependencies": {
-    "nan": "^2.4.0"
+    "nan": "^2.14.1"
   },
   "devDependencies": {
     "colors": "^1.1.2",
