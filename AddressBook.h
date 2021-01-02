@@ -22,16 +22,12 @@
 #include "Person.h"
 #include "Group.h"
 
-//using namespace std;
-
 class AddressBook
 {
 public:
     Person* getMe() const;
     unsigned long contactCount() const;
     Person* getContact(unsigned long pos) const;
-//    std::vector<std::shared_prt<Person*>> getAllContacts() const;
-//    Person* * getAllContacts() const;
     std::vector<Person*> getAllContacts() const;
     unsigned long groupCount() const;
     Group* getGroup(unsigned long pos) const;
