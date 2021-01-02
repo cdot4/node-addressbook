@@ -147,13 +147,7 @@ class AddressBookWorker : public AsyncProgressWorker
     void Execute(const AsyncProgressWorker::ExecutionProgress &progress)
     {
         AddressBook ab;
-        unsigned total = ab.contactCount();
-        for (unsigned int i = 0; i < total; i++)
-        {
-            contacts.push_back(ab.getContact(i));
-            int percent = ((double)i / (double)total) * 100;
-            progress.Send(reinterpret_cast<const char *>(&percent), sizeof(int));
-        }
+        contacts = ab.getAllContacts();
     }
 
     void HandleProgressCallback(const char *data, size_t size)

@@ -28,6 +28,7 @@ public:
     Person* getMe() const;
     unsigned long contactCount() const;
     Person* getContact(unsigned long pos) const;
+    std::vector<Person*> getAllContacts() const;
     unsigned long groupCount() const;
     Group* getGroup(unsigned long pos) const;
 
