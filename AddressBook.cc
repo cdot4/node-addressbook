@@ -16,6 +16,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+
+#include <iostream>
 #include "Person.h"
 #include "Group.h"
 
@@ -24,6 +26,7 @@
 #endif
 
 #include "AddressBook.h"
+using namespace std;
 
 AddressBook::AddressBook()
 {
@@ -115,5 +118,33 @@ Person* AddressBook::getContact(unsigned long pos) const
 	Person *p = new Person();
 #endif
 	return p;
+}
+
+//std::vector<std::shared_ptr<Person*>> AddressBook::getAllContacts() const
+std::vector<Person*> AddressBook::getAllContacts() const
+{
+#ifdef __APPLE__
+    std::vector<Person*> persons;
+	Person *p = NULL;
+	ABAddressBookRef ab = ABGetSharedAddressBook();
+	CFArrayRef peeps = ABCopyArrayOfAllPeople(ab);
+	if (peeps) {
+		CFIndex count = CFArrayGetCount(peeps);
+
+		for (int i = 0; i < (int)count; i++) {
+		    cout << "looping cfindex " << i;
+		    ABPersonRef pe = (ABPersonRef)CFArrayGetValueAtIndex(peeps, i);
+		    if (pe) {
+                p = new Person(pe);
+		        persons.push_back(p);
+            }
+		}
+	}
+
+    CFRelease(peeps);
+#else
+    std::vector<Person*> persons;
+#endif
+	return persons;
 }
 
