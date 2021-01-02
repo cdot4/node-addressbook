@@ -17,7 +17,6 @@
 
 
 
-#include <iostream>
 #include "Person.h"
 #include "Group.h"
 
@@ -26,7 +25,6 @@
 #endif
 
 #include "AddressBook.h"
-using namespace std;
 
 AddressBook::AddressBook()
 {
@@ -49,7 +47,7 @@ unsigned long AddressBook::groupCount() const
 	#ifdef __APPLE__
 		CFIndex count = 0;
 		ABAddressBookRef ab = ABGetSharedAddressBook();
-		CFArrayRef groups = ABCopyArrayOfAllGroups(ab); 
+		CFArrayRef groups = ABCopyArrayOfAllGroups(ab);
 		if (groups) {
 			count = CFArrayGetCount(groups);
 			CFRelease(groups);
@@ -65,7 +63,7 @@ Group* AddressBook::getGroup(unsigned long pos) const
 #ifdef __APPLE__
 	Group *g = NULL;
 	ABAddressBookRef ab = ABGetSharedAddressBook();
-	CFArrayRef groups = ABCopyArrayOfAllGroups(ab); 
+	CFArrayRef groups = ABCopyArrayOfAllGroups(ab);
 	if (groups) {
 		CFIndex count = CFArrayGetCount(groups);
 		if ((CFIndex)pos < count) {
@@ -87,7 +85,7 @@ unsigned long AddressBook::contactCount() const
 #ifdef __APPLE__
 	CFIndex count = 0;
 	ABAddressBookRef ab = ABGetSharedAddressBook();
-	CFArrayRef peeps = ABCopyArrayOfAllPeople(ab); 
+	CFArrayRef peeps = ABCopyArrayOfAllPeople(ab);
 	if (peeps) {
 		count = CFArrayGetCount(peeps);
 		CFRelease(peeps);
@@ -103,7 +101,7 @@ Person* AddressBook::getContact(unsigned long pos) const
 #ifdef __APPLE__
 	Person *p = NULL;
 	ABAddressBookRef ab = ABGetSharedAddressBook();
-	CFArrayRef peeps = ABCopyArrayOfAllPeople(ab); 
+	CFArrayRef peeps = ABCopyArrayOfAllPeople(ab);
 	if (peeps) {
 		CFIndex count = CFArrayGetCount(peeps);
 		if ((CFIndex)pos < count) {
@@ -120,31 +118,28 @@ Person* AddressBook::getContact(unsigned long pos) const
 	return p;
 }
 
-//std::vector<std::shared_ptr<Person*>> AddressBook::getAllContacts() const
-std::vector<Person*> AddressBook::getAllContacts() const
-{
+std::vector<Person *> AddressBook::getAllContacts() const {
 #ifdef __APPLE__
     std::vector<Person*> persons;
-	Person *p = NULL;
-	ABAddressBookRef ab = ABGetSharedAddressBook();
-	CFArrayRef peeps = ABCopyArrayOfAllPeople(ab);
-	if (peeps) {
-		CFIndex count = CFArrayGetCount(peeps);
+    Person *p = NULL;
+    ABAddressBookRef ab = ABGetSharedAddressBook();
+    CFArrayRef peeps = ABCopyArrayOfAllPeople(ab);
+    if (peeps) {
+        CFIndex count = CFArrayGetCount(peeps);
 
-		for (int i = 0; i < (int)count; i++) {
-		    cout << "looping cfindex " << i;
-		    ABPersonRef pe = (ABPersonRef)CFArrayGetValueAtIndex(peeps, i);
-		    if (pe) {
+        for (int i = 0; i < (int)count; i++) {
+            ABPersonRef pe = (ABPersonRef)CFArrayGetValueAtIndex(peeps, i);
+            if (pe) {
                 p = new Person(pe);
-		        persons.push_back(p);
+                persons.push_back(p);
             }
-		}
-	}
+        }
+    }
 
     CFRelease(peeps);
 #else
-    std::vector<Person*> persons;
+    std::vector < Person * > persons;
 #endif
-	return persons;
+    return persons;
 }
 
